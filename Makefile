@@ -4,7 +4,7 @@ OBJCOPY = avr-objcopy
 DEVICE = atmega328p
 CFLAGS = -Os -mmcu=$(DEVICE)
 LDFLAGS = -mmcu=$(DEVICE)
-PORT = \\.\COM3
+PORT = \\.\COM5
 
 PREF_SRC = ./src/
 PREF_OBJ = ./object/

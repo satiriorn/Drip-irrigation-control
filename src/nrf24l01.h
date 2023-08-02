@@ -1,53 +1,45 @@
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
+// MIT License
+//
+// Copyright (c) 2018 Helvijs Adams
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 #ifndef _NRF24L01_H
 #define _NRF24L01_H
 
+//	States
+#define POWERUP		1
+#define POWERDOWN	2
+#define RECEIVE		3
+#define TRANSMIT	4
+#define STANDBY1	5
+#define STANDBY2	6
 
-typedef struct {
-    int pipe_number;
-    uint8_t data[32];
-    uint8_t length;
-} nRF24L01Message;
+//	Forward declarations
+uint8_t nrf24_send_spi(uint8_t register_address, void *data, unsigned int bytes);
+uint8_t nrf24_write(uint8_t register_address, uint8_t *data, unsigned int bytes);
+uint8_t nrf24_read(uint8_t register_address, uint8_t *data, unsigned int bytes);
+void nrf24_init(void);
+void nrf24_state(uint8_t state);
+void nrf24_start_listening(void);
+unsigned int nrf24_available(void);
+const char * nrf24_read_message(void);
+uint8_t nrf24_send_message(const void *tx_message);
 
-typedef struct {
-    volatile uint8_t *port;
-    uint8_t pin;
-} gpio_pin;
-
-typedef struct {
-    gpio_pin ss; // slave select
-    gpio_pin ce; // chip enabled
-    gpio_pin sck; // serial clock
-    gpio_pin mosi; // master out slave in
-    gpio_pin miso; // master in slave out
-    uint8_t status;
-} nRF24L01;
-
-
-nRF24L01 *nRF24L01_init(void);
-void nRF24L01_begin(nRF24L01 *rf);
-uint8_t nRF24L01_send_command(nRF24L01 *rf, uint8_t command, void *data,
-    size_t length);
-uint8_t nRF24L01_write_register(nRF24L01 *rf, uint8_t reg_address, void *data,
-    size_t length);
-uint8_t nRF24L01_read_register(nRF24L01 *rf, uint8_t regAddress, void *data,
-    size_t length);
-uint8_t nRF24L01_no_op(nRF24L01 *rf);
-uint8_t nRF24L01_update_status(nRF24L01 *rf);
-uint8_t nRF24L01_get_status(nRF24L01 *rf);
-void nRF24L01_listen(nRF24L01 *rf, int pipe, uint8_t *address);
-bool nRF24L01_data_received(nRF24L01 *rf);
-bool nRF24L01_read_received_data(nRF24L01 *rf, nRF24L01Message *message);
-int nRF24L01_pipe_number_received(nRF24L01 *rf);
-void nRF24L01_transmit(nRF24L01 *rf, void *address, nRF24L01Message *msg);
-int nRF24L01_transmit_success(nRF24L01 *rf);
-void nRF24L01_flush_transmit_message(nRF24L01 *rf);
-void nRF24L01_retry_transmit(nRF24L01 *rf);
-void nRF24L01_clear_interrupts(nRF24L01 *rf);
-void nRF24L01_clear_transmit_interrupts(nRF24L01 *rf);
-void nRF24L01_clear_receive_interrupt(nRF24L01 *rf);
-
-#endif
+#endif /*_NRF24L01_H*/
