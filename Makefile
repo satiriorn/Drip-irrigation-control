@@ -1,4 +1,4 @@
-TARGET = transmitter
+TARGET = main
 CC = avr-gcc
 OBJCOPY = avr-objcopy
 DEVICE = atmega328p
@@ -26,7 +26,7 @@ $(PREF_ELF)%.elf : $(PREF_OBJ)%.o
 	 $(OBJCOPY) -j .text -j .data -O hex $< $@
 
 deploy: 
-	avrdude -F -V -c arduino -p ATMEGA328P -P ${PORT} -b 115200 -U flash:w:transmitter
+	avrdude -F -V -c arduino -p ATMEGA328P -P ${PORT} -b 115200 -U flash:w:main
 
 clean:
 	del .\object\*.o
