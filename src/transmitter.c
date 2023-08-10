@@ -75,7 +75,15 @@ int main(void)
     {
 		_delay_ms(500);
 		status = nrf24_send_message(tx_message);
-		if (status == true) printf("Message sent successfully\n");
+		if (status == true) {
+			printf("Message sent successfully\n");
+			if (message_received)
+			{
+				message_received = false;
+				printf("Received message: %s\n",nrf24_read_message());
+				return 0;
+			}
+		}
     }
 }
 

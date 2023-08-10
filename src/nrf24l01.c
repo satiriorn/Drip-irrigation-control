@@ -65,9 +65,12 @@ uint8_t tx_address[5] = { 0xe7, 0xe7, 0xe7, 0xe7, 0xe7 };	// Write pipe address
 // then change DDRB -> DDRC, PORTB -> PORTC and so on
 //
 // CE
-#define CE_DDR		DDRB
-#define CE_PORT		PORTB
-#define CE_PIN		DDB1									// CE connected to PB1
+#define CE_DDR      DDRC
+#define CE_PORT     PORTC
+#define CE_PIN      PC0
+//#define CE_DDR		DDRB
+//#define CE_PORT		PORTB
+//#define CE_PIN		DDB1									// CE connected to PB1
 // CSN
 #define CSN_DDR		DDRB
 #define CSN_PORT	PORTB

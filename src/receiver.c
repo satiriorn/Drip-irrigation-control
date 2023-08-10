@@ -33,7 +33,6 @@
 #endif
 
 #include <avr/io.h>
-#include <util/delay.h>
 #include <avr/interrupt.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -56,8 +55,12 @@ void print_config(void);
 volatile bool message_received = false;
 volatile bool status = false;
 
+#define VALVE_OPEN 1999
+#define VALVE_CLOSE 4999
+
 int main(void)
 {	
+	char tx_message[32];				// Define string array
 	
 	//	Initialize UART
 	uart_init();
@@ -78,12 +81,21 @@ int main(void)
 			printf("Received message: %s\n",nrf24_read_message());
 			if(strcmp(nrf24_read_message(), "ON"))
 			{
-				set_servo_angle(4999); //Set servo angle for open valve
+				printf("State on");
+				set_servo_angle(VALVE_OPEN);
+				strcpy(tx_message,"State valve is open");
 			}
 			else{
-				set_servo_angle(2999); //Set servo angle for close
+				printf("State off");
+				set_servo_angle(VALVE_CLOSE);
+				strcpy(tx_message,"State valve is close");
 			}
+			_delay_ms(500);
+			status = nrf24_send_message(tx_message);
+			if (status == true) printf("Message sent successfully\n");
 		}
+		
+		
     }
 }
 
