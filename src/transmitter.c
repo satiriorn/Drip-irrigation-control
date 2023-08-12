@@ -59,7 +59,7 @@ int main(void)
 {	
 	//	Set cliche message to send (message cannot exceed 32 characters)
 	char tx_message[32];				// Define string array
-	strcpy(tx_message,"ON");	// Copy string into array
+	strcpy(tx_message,"TIMER ON");	// Copy string into array
 	
 	//	Initialize UART
 	uart_init();

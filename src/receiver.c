@@ -1,32 +1,3 @@
-// 	MIT License
-// 
-// 	Copyright (c) 2018 Helvijs Adams
-// 
-// 	Permission is hereby granted, free of charge, to any person obtaining a copy
-// 	of this software and associated documentation files (the "Software"), to deal
-// 	in the Software without restriction, including without limitation the rights
-// 	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// 	copies of the Software, and to permit persons to whom the Software is
-// 	furnished to do so, subject to the following conditions:
-// 
-// 	The above copyright notice and this permission notice shall be included in all
-// 	copies or substantial portions of the Software.
-// 
-// 	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// 	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// 	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// 	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// 	SOFTWARE.
-
-//
-//	Software was tested on ATmega328P and ATmega328PB (PB needs few changes in SPI)
-//	RF module software was tested on - cheap nRF24L01+ from China
-//	All the relevant settings are defined in nrf24l01.c file
-//	Some features will be added later, at this moment it is bare minimum to send/receive
-//
-
 //	Set clock frequency
 #ifndef F_CPU
 #define F_CPU 16000000UL
@@ -37,13 +8,17 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <util/delay.h>
 
 //	Set up UART for printf();
 #ifndef BAUD
 #define BAUD 9600
 #endif
 #include "STDIO_UART.h"
+
 #include "servo.h"
+
+#include "timer.h"
 
 //	Include nRF24L01+ library
 #include "nrf24l01.h"
@@ -51,18 +26,98 @@
 #include "spi.h"
 void print_config(void);
 
+void init(void);
+
 //	Used in IRQ ISR
 volatile bool message_received = false;
 volatile bool status = false;
-
-#define VALVE_OPEN 1999
-#define VALVE_CLOSE 4999
+//bool valve_status = false;
+#define VALVE_OPEN 1499
+#define VALVE_CLOSE 3499
+#define VALVE_SEMIOPEN 2499
+#define TIMER_HOUR_STOP 1
 
 int main(void)
 {	
+	init();
 	char tx_message[32];				// Define string array
-	
-	//	Initialize UART
+	char rx_message[32];
+    while (1) 
+    {
+		printf("%i:%i:%i\r\n", hours, minutes, seconds);
+		if (message_received)
+		{
+			message_received = false;
+			printf("Received message: %s\r\n",nrf24_read_message());
+			strcpy(rx_message, nrf24_read_message());
+			
+			if(strcmp(rx_message, "ON VALVE")==0)
+			{
+				printf("State on\r\n");
+				set_servo_angle(VALVE_OPEN);
+				strcpy(tx_message,"State valve - open\r\n");
+			}
+			else if (strcmp(rx_message, "OFF VALVE")==0){
+				printf("State off\r\n");
+				set_servo_angle(VALVE_CLOSE);
+				strcpy(tx_message,"State valve - close\r\n");
+			}
+			else if(strcmp(rx_message, "TIMER ON")==0){
+				printf("Start timer\r\n");
+				set_servo_angle(VALVE_OPEN);
+				timer_init();
+				strcpy(tx_message,"Timer on state valve - open\r\n");
+			}
+			else if(strcmp(rx_message, "TIMER OFF")==0){
+				printf("Timer end\r\n");
+				set_servo_angle(VALVE_CLOSE);
+				timer_stop();
+				milliseconds=seconds=hours=minutes = 0;
+				strcpy(tx_message,"Timer off state valve - close\r\n");
+			}
+			else{
+				strcpy(tx_message,"The command is incorrect\r\n");
+			}
+			
+			_delay_ms(500);
+			status = nrf24_send_message(tx_message);
+			if (status == true) printf("Message sent successfully\r\n");
+		}
+		_delay_ms(1000);
+    }
+}
+
+//	Interrupt on IRQ pin
+ISR(INT0_vect) 
+{
+	message_received = true;
+}
+
+ISR(TIMER0_COMPA_vect) {
+    milliseconds+=16;
+	if (milliseconds >= 1000) {
+		milliseconds = 0;
+		seconds++;
+	}
+	if(seconds==59){
+		minutes++;
+		seconds = 0;
+	}
+	if(minutes>59){
+		hours++;
+		minutes = 0;
+	}
+	if(TIMER_HOUR_STOP==minutes){
+		milliseconds=seconds=hours=minutes = 0;
+		set_servo_angle(VALVE_OPEN);
+	}
+	if(30==seconds){
+		set_servo_angle(VALVE_CLOSE);
+	}
+}
+
+void init() {
+		//	Initialize UART
 	uart_init();
 	
 	//	Initialize nRF24L01+ and print configuration info
@@ -72,37 +127,7 @@ int main(void)
 	servo_init();
 	//	Start listening to incoming messages
 	nrf24_start_listening();
-	
-    while (1) 
-    {
-		if (message_received)
-		{
-			message_received = false;
-			printf("Received message: %s\n",nrf24_read_message());
-			if(strcmp(nrf24_read_message(), "ON"))
-			{
-				printf("State on");
-				set_servo_angle(VALVE_OPEN);
-				strcpy(tx_message,"State valve is open");
-			}
-			else{
-				printf("State off");
-				set_servo_angle(VALVE_CLOSE);
-				strcpy(tx_message,"State valve is close");
-			}
-			_delay_ms(500);
-			status = nrf24_send_message(tx_message);
-			if (status == true) printf("Message sent successfully\n");
-		}
-		
-		
-    }
-}
-
-//	Interrupt on IRQ pin
-ISR(INT0_vect) 
-{
-	message_received = true;
+	set_servo_angle(VALVE_CLOSE);
 }
 
 void print_config(void)
