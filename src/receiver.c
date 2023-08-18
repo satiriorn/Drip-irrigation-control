@@ -5,6 +5,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/sleep.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,11 +32,17 @@ void init(void);
 //	Used in IRQ ISR
 volatile bool message_received = false;
 volatile bool status = false;
+volatile bool state_sleep = false;
+
+uint8_t time_sleep_min = 3;
+uint8_t time_work_min = 1;
+volatile uint16_t timer_counter = 0;
+
 //bool valve_status = false;
 #define VALVE_OPEN 1499
 #define VALVE_CLOSE 3499
 #define VALVE_SEMIOPEN 2499
-#define TIMER_HOUR_STOP 1
+#define TIMER_HOUR_STOP 1	
 
 int main(void)
 {	
@@ -65,13 +72,13 @@ int main(void)
 			else if(strcmp(rx_message, "TIMER ON")==0){
 				printf("Start timer\r\n");
 				set_servo_angle(VALVE_OPEN);
-				timer_init();
+				timer0_init();
 				strcpy(tx_message,"Timer on state valve - open\r\n");
 			}
 			else if(strcmp(rx_message, "TIMER OFF")==0){
 				printf("Timer end\r\n");
 				set_servo_angle(VALVE_CLOSE);
-				timer_stop();
+				timer0_stop();
 				milliseconds=seconds=hours=minutes = 0;
 				strcpy(tx_message,"Timer off state valve - close\r\n");
 			}
@@ -111,12 +118,39 @@ ISR(TIMER0_COMPA_vect) {
 		milliseconds=seconds=hours=minutes = 0;
 		set_servo_angle(VALVE_OPEN);
 	}
+	/*
 	if(30==seconds){
 		set_servo_angle(VALVE_CLOSE);
 	}
+	*/
 }
 
-void init() {
+ISR(TIMER2_OVF_vect) {
+	milliseconds_second+=16;
+    if (milliseconds_second >= 1000) {
+		milliseconds_second = 0;
+		seconds_second++;
+	}
+	if(seconds_second==59){
+		minutes_second++;
+		seconds_second = 0;
+	}
+	if(minutes_second==2 && state_sleep){
+		milliseconds_second=seconds_second=milliseconds_second=0;
+		state_sleep=false;
+		sleep_disable();
+		printf("SLEEP OFF\n");
+	}
+	else if(state_sleep==false&& minutes_second==1){
+		 printf("SLEEP ON\n");
+		sleep_mode();
+		sleep_enable();
+		sleep_cpu();
+		state_sleep=true;
+	}
+}
+
+void init(void) {
 		//	Initialize UART
 	uart_init();
 	
@@ -128,6 +162,8 @@ void init() {
 	//	Start listening to incoming messages
 	nrf24_start_listening();
 	set_servo_angle(VALVE_CLOSE);
+	timer2_init();
+	sei();
 }
 
 void print_config(void)

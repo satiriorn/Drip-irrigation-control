@@ -59,7 +59,7 @@ int main(void)
 {	
 	//	Set cliche message to send (message cannot exceed 32 characters)
 	char tx_message[32];				// Define string array
-	strcpy(tx_message,"TIMER ON");	// Copy string into array
+	strcpy(tx_message,"PUMP ON");	// Copy string into array
 	
 	//	Initialize UART
 	uart_init();
@@ -77,13 +77,12 @@ int main(void)
 		status = nrf24_send_message(tx_message);
 		if (status == true) {
 			printf("Message sent successfully\n");
-			if (message_received)
-			{
-				message_received = false;
-				printf("Received message: %s\n",nrf24_read_message());
-				return 0;
-			}
+		if (message_received)
+		{
+			message_received = false;
+			printf("Received message: %s\n",nrf24_read_message());
 		}
+		
     }
 }
 
