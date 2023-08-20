@@ -59,7 +59,7 @@ int main(void)
 {	
 	//	Set cliche message to send (message cannot exceed 32 characters)
 	char tx_message[32];				// Define string array
-	strcpy(tx_message,"PUMP ON");	// Copy string into array
+	strcpy(tx_message,"ON VALVE");	// Copy string into array
 	
 	//	Initialize UART
 	uart_init();
@@ -73,15 +73,24 @@ int main(void)
 	
     while (1) 
     {
-		_delay_ms(500);
+		_delay_ms(5000);
 		status = nrf24_send_message(tx_message);
+		if(strcmp(tx_message, "ON VALVE")==0){
+			strcpy(tx_message,"OFF VALVE");
+		}
+		else{
+			strcpy(tx_message,"ON VALVE");
+		}
+		
 		if (status == true) {
 			printf("Message sent successfully\n");
+		}
 		if (message_received)
 		{
 			message_received = false;
 			printf("Received message: %s\n",nrf24_read_message());
 		}
+		
 		
     }
 }

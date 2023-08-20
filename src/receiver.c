@@ -47,11 +47,9 @@ volatile uint16_t timer_counter = 0;
 int main(void)
 {	
 	init();
-	char tx_message[32];				// Define string array
-	char rx_message[32];
+	char tx_message[32], rx_message[32];				// Define string array
     while (1) 
     {
-		printf("%i:%i:%i\r\n", hours, minutes, seconds);
 		if (message_received)
 		{
 			message_received = false;
@@ -85,12 +83,9 @@ int main(void)
 			else{
 				strcpy(tx_message,"The command is incorrect\r\n");
 			}
-			
-			_delay_ms(500);
 			status = nrf24_send_message(tx_message);
 			if (status == true) printf("Message sent successfully\r\n");
 		}
-		_delay_ms(1000);
     }
 }
 
@@ -109,6 +104,7 @@ ISR(TIMER0_COMPA_vect) {
 	if(seconds==59){
 		minutes++;
 		seconds = 0;
+		printf("%i:%i:%i\r\n", hours, minutes, seconds);
 	}
 	if(minutes>59){
 		hours++;
@@ -125,29 +121,43 @@ ISR(TIMER0_COMPA_vect) {
 	*/
 }
 
-ISR(TIMER2_OVF_vect) {
+ISR(TIMER2_COMPA_vect) {
 	milliseconds_second+=16;
     if (milliseconds_second >= 1000) {
 		milliseconds_second = 0;
 		seconds_second++;
+		printf("%i:%i\r\n", minutes_second, seconds_second);
 	}
 	if(seconds_second==59){
 		minutes_second++;
 		seconds_second = 0;
 	}
-	if(minutes_second==2 && state_sleep){
+	if(seconds_second==20 && state_sleep==true){
 		milliseconds_second=seconds_second=milliseconds_second=0;
 		state_sleep=false;
 		sleep_disable();
 		printf("SLEEP OFF\n");
 	}
-	else if(state_sleep==false&& minutes_second==1){
-		 printf("SLEEP ON\n");
+	else if(state_sleep==false && seconds_second==20){
+		sei();
+		milliseconds_second=seconds_second=milliseconds_second=0;
+		printf("SLEEP ON\n");
 		sleep_mode();
 		sleep_enable();
 		sleep_cpu();
+		
+		DDRB = 0xff;
+		DDRC = 0xff;
+		DDRD = 0xff;
+		
+		/*All port-pins are set to LOW*/
+		
+		PORTB = 0x00;
+		PORTC =0x00;
+		PORTD = 0x00;
 		state_sleep=true;
 	}
+	
 }
 
 void init(void) {
@@ -162,8 +172,12 @@ void init(void) {
 	//	Start listening to incoming messages
 	nrf24_start_listening();
 	set_servo_angle(VALVE_CLOSE);
-	timer2_init();
+	//cli();
+	//set_sleep_mode(SLEEP_MODE_IDLE);
+	//set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+	set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 	sei();
+	timer2_init();
 }
 
 void print_config(void)
