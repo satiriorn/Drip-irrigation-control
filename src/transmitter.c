@@ -73,7 +73,7 @@ int main(void)
 	
     while (1) 
     {
-		_delay_ms(5000);
+		_delay_ms(1000);
 		status = nrf24_send_message(tx_message);
 		if(strcmp(tx_message, "ON VALVE")==0){
 			strcpy(tx_message,"OFF VALVE");

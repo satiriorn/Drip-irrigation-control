@@ -53,9 +53,7 @@ int main(void)
 		if (message_received)
 		{
 			message_received = false;
-			printf("Received message: %s\r\n",nrf24_read_message());
-			strcpy(rx_message, nrf24_read_message());
-			
+			strcpy(rx_message, nrf24_read_message());			
 			if(strcmp(rx_message, "ON VALVE")==0)
 			{
 				printf("State on\r\n");
@@ -83,8 +81,10 @@ int main(void)
 			else{
 				strcpy(tx_message,"The command is incorrect\r\n");
 			}
+			/*
 			status = nrf24_send_message(tx_message);
 			if (status == true) printf("Message sent successfully\r\n");
+			*/
 		}
     }
 }
@@ -136,26 +136,27 @@ ISR(TIMER2_COMPA_vect) {
 		milliseconds_second=seconds_second=milliseconds_second=0;
 		state_sleep=false;
 		sleep_disable();
+		//main();
 		printf("SLEEP OFF\n");
+		//sei();
 	}
 	else if(state_sleep==false && seconds_second==20){
-		sei();
 		milliseconds_second=seconds_second=milliseconds_second=0;
 		printf("SLEEP ON\n");
+		state_sleep=true;
+		sei();
 		sleep_mode();
 		sleep_enable();
 		sleep_cpu();
-		
+		/*
 		DDRB = 0xff;
 		DDRC = 0xff;
 		DDRD = 0xff;
 		
-		/*All port-pins are set to LOW*/
-		
 		PORTB = 0x00;
 		PORTC =0x00;
 		PORTD = 0x00;
-		state_sleep=true;
+		*/
 	}
 	
 }
