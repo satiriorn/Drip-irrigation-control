@@ -9,7 +9,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <util/delay.h>
 
 //	Set up UART for printf();
 #ifndef BAUD
@@ -86,6 +85,28 @@ int main(void)
 			if (status == true) printf("Message sent successfully\r\n");
 			*/
 		}
+		else if(seconds_second==20 && state_sleep==true){
+				milliseconds_second=seconds_second=milliseconds_second=0;
+				state_sleep=false;
+				sleep_disable();
+				sei();
+				nrf24_state(POWERUP);
+				servo_init();
+				printf("SLEEP OFF\n");
+			}
+		else if(state_sleep==false && seconds_second==20){
+				milliseconds_second=seconds_second=milliseconds_second=0;
+				printf("SLEEP ON\n");
+				state_sleep=true;
+				sei();
+				servo_power_off();
+				nrf24_state(POWERDOWN);
+				sleep_mode();
+				sleep_enable();
+				sleep_cpu();
+				return 0;
+				
+			}
     }
 }
 
@@ -131,34 +152,7 @@ ISR(TIMER2_COMPA_vect) {
 	if(seconds_second==59){
 		minutes_second++;
 		seconds_second = 0;
-	}
-	if(seconds_second==20 && state_sleep==true){
-		milliseconds_second=seconds_second=milliseconds_second=0;
-		state_sleep=false;
-		sleep_disable();
-		//main();
-		printf("SLEEP OFF\n");
-		//sei();
-	}
-	else if(state_sleep==false && seconds_second==20){
-		milliseconds_second=seconds_second=milliseconds_second=0;
-		printf("SLEEP ON\n");
-		state_sleep=true;
-		sei();
-		sleep_mode();
-		sleep_enable();
-		sleep_cpu();
-		/*
-		DDRB = 0xff;
-		DDRC = 0xff;
-		DDRD = 0xff;
-		
-		PORTB = 0x00;
-		PORTC =0x00;
-		PORTD = 0x00;
-		*/
-	}
-	
+	}	
 }
 
 void init(void) {
@@ -175,8 +169,8 @@ void init(void) {
 	set_servo_angle(VALVE_CLOSE);
 	//cli();
 	//set_sleep_mode(SLEEP_MODE_IDLE);
-	//set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-	set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+	//set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 	sei();
 	timer2_init();
 }
