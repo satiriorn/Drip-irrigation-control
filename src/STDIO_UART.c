@@ -1,7 +1,7 @@
 //	https://www.gnu.org/savannah-checkouts/non-gnu/avr-libc/user-manual/group__avr__stdio.html
 
 #ifndef F_CPU
-#define F_CPU 16000000UL 
+#define F_CPU 8000000UL 
 #endif
 
 #include <stdio.h>

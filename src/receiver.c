@@ -1,8 +1,3 @@
-//	Set clock frequency
-#ifndef F_CPU
-#define F_CPU 16000000UL
-#endif
-
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
@@ -10,10 +5,6 @@
 #include <stdio.h>
 #include <string.h>
 
-//	Set up UART for printf();
-#ifndef BAUD
-#define BAUD 9600
-#endif
 #include "STDIO_UART.h"
 
 #include "servo.h"
@@ -38,9 +29,9 @@ uint8_t time_work_min = 1;
 volatile uint16_t timer_counter = 0;
 
 //bool valve_status = false;
-#define VALVE_OPEN 1499
-#define VALVE_CLOSE 3499
-#define VALVE_SEMIOPEN 2499
+#define VALVE_OPEN 1259
+#define VALVE_CLOSE 2299
+#define VALVE_SEMIOPEN 1779
 #define TIMER_HOUR_STOP 1	
 
 int main(void)
@@ -104,8 +95,6 @@ int main(void)
 				sleep_mode();
 				sleep_enable();
 				sleep_cpu();
-				return 0;
-				
 			}
     }
 }
@@ -143,7 +132,7 @@ ISR(TIMER0_COMPA_vect) {
 }
 
 ISR(TIMER2_COMPA_vect) {
-	milliseconds_second+=16;
+	milliseconds_second+=32;
     if (milliseconds_second >= 1000) {
 		milliseconds_second = 0;
 		seconds_second++;
@@ -157,8 +146,9 @@ ISR(TIMER2_COMPA_vect) {
 
 void init(void) {
 		//	Initialize UART
+	CLKPR = 0x80; // (1000 0000) enable change in clock frequency
+  	CLKPR = 0x01; 
 	uart_init();
-	
 	//	Initialize nRF24L01+ and print configuration info
     nrf24_init();
 	print_config();
@@ -169,8 +159,8 @@ void init(void) {
 	set_servo_angle(VALVE_CLOSE);
 	//cli();
 	//set_sleep_mode(SLEEP_MODE_IDLE);
-	set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-	//set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+	//set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+	set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 	sei();
 	timer2_init();
 }
