@@ -144,20 +144,15 @@ ISR(TIMER2_COMPA_vect) {
 	}	
 }
 
-void init(void) {
-		//	Initialize UART
-	CLKPR = 0x80; // (1000 0000) enable change in clock frequency
-  	CLKPR = 0x01; 
-	uart_init();
-	//	Initialize nRF24L01+ and print configuration info
-    nrf24_init();
+void init(void) {	
+	CLKPR = 0x80;// Enable change in clock frequency
+  	CLKPR = 0x01; // Set clock division factor to 2, resulting in 8 MHz
+	uart_init();//	Initialize UART
+    nrf24_init();//	Initialize nRF24L01+ and print configuration info
 	print_config();
-	//Initialize control servo
-	servo_init();
-	//	Start listening to incoming messages
-	nrf24_start_listening();
+	servo_init(); //Initialize control servo
+	nrf24_start_listening(); //	Start listening to incoming messages
 	set_servo_angle(VALVE_CLOSE);
-	//cli();
 	//set_sleep_mode(SLEEP_MODE_IDLE);
 	//set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 	set_sleep_mode(SLEEP_MODE_PWR_SAVE);
