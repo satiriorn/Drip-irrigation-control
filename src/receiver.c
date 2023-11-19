@@ -15,6 +15,7 @@
 #include "nrf24l01.h"
 #include "nrf24l01-mnemonics.h"
 #include "spi.h"
+#include "capacitive_soil_moisture.h"
 void print_config(void);
 
 void init(void);
@@ -24,11 +25,13 @@ volatile bool message_received = false;
 volatile bool status = false;
 volatile bool state_sleep = false;
 
+bool valve_status = false;
+
 uint8_t time_sleep_min = 3;
 uint8_t time_work_min = 1;
 volatile uint16_t timer_counter = 0;
 
-//bool valve_status = false;
+
 #define VALVE_OPEN 1259
 #define VALVE_CLOSE 2299
 #define VALVE_SEMIOPEN 1779
@@ -48,23 +51,28 @@ int main(void)
 			{
 				printf("State on\r\n");
 				set_servo_angle(VALVE_OPEN);
+				valve_status = true;
 				strcpy(tx_message,"State valve - open\r\n");
 			}
 			else if (strcmp(rx_message, "OFF VALVE")==0){
 				printf("State off\r\n");
 				set_servo_angle(VALVE_CLOSE);
+				valve_status = false;
 				strcpy(tx_message,"State valve - close\r\n");
 			}
 			else if(strcmp(rx_message, "TIMER ON")==0){
 				printf("Start timer\r\n");
 				set_servo_angle(VALVE_OPEN);
 				timer0_init();
+				valve_status = true;
 				strcpy(tx_message,"Timer on state valve - open\r\n");
 			}
 			else if(strcmp(rx_message, "TIMER OFF")==0){
 				printf("Timer end\r\n");
+				//valve_status = false;
 				set_servo_angle(VALVE_CLOSE);
 				timer0_stop();
+				valve_status = false;
 				milliseconds=seconds=hours=minutes = 0;
 				strcpy(tx_message,"Timer off state valve - close\r\n");
 			}
@@ -96,6 +104,14 @@ int main(void)
 				sleep_enable();
 				sleep_cpu();
 			}
+		if(transform_to_percent()<50 && !valve_status){
+			printf("Valve open. %i percentage of humidity\n", transform_to_percent());
+			set_servo_angle(VALVE_OPEN);
+			valve_status = true;
+		}
+		else {
+			set_servo_angle(VALVE_CLOSE);
+		}
     }
 }
 
@@ -151,10 +167,9 @@ void init(void) {
     nrf24_init();//	Initialize nRF24L01+ and print configuration info
 	print_config();
 	servo_init(); //Initialize control servo
+	capacitive_soil_moisture_init();
 	nrf24_start_listening(); //	Start listening to incoming messages
 	set_servo_angle(VALVE_CLOSE);
-	//set_sleep_mode(SLEEP_MODE_IDLE);
-	//set_sleep_mode(SLEEP_MODE_PWR_DOWN);
 	set_sleep_mode(SLEEP_MODE_PWR_SAVE);
 	sei();
 	timer2_init();
