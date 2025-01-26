@@ -20,6 +20,3 @@ For the case, a 3D model was used at the link:
 https://www.thingiverse.com/thing:5347976
 For arduino nano model scaling can be default but 18650 need bigger size or need to use smaller size battery. 
 For arduino uno you must increase size of model by 20%.
-
-Scheme of connecting elements for transmitter:
-<img src="https://github.com/satiriorn/Drip-irrigation-control/blob/Satiriorn/schemes/result.jpg" alt="Result"/>
